@@ -22,7 +22,21 @@
 
 namespace flatbuffers {
 
-// Helper class to verify the integrity of a FlatBuffer
+// Helper class to __supress_ubsan__("unsigned-integer-overflow") bool VerifyTableStart(
+      const uint8_t *table) {
+    // Check the vtable offset.
+    auto tableo = static_cast<size_t>(table - buf_);
+    if (!Verify<soffset_t>(tableo)) return false;
+    // This offset may be signed, but doing the subtraction unsigned always
+    // gives the result we want.
+    auto vtableo = tableo - static_cast<size_t>(ReadScalar<soffset_t>(table));
+    // Check the vtable size field, then check vtable fits in its entirety.
+    if (!( VerifyComplexity() && Verify<voffset_t>(vtableo) &&
+           VerifyAlignment(ReadScalar<voffset_t>(buf_ + vtableo),
+                           sizeof(voffset_t)))) return false;
+    auto vsize = ReadScalar<voffset_t>(buf_ + vtableo);
+    return Check((vsize & 1) == 0) && Verify(vtableo, vsize);
+  } the integrity of a FlatBuffer
 class Verifier FLATBUFFERS_FINAL_CLASS {
  public:
   Verifier(const uint8_t *buf, size_t buf_len, uoffset_t _max_depth = 64,
@@ -164,10 +178,11 @@ class Verifier FLATBUFFERS_FINAL_CLASS {
     // gives the result we want.
     auto vtableo = tableo - static_cast<size_t>(ReadScalar<soffset_t>(table));
     // Check the vtable size field, then check vtable fits in its entirety.
-    return VerifyComplexity() && Verify<voffset_t>(vtableo) &&
+    if (!( VerifyComplexity() && Verify<voffset_t>(vtableo) &&
            VerifyAlignment(ReadScalar<voffset_t>(buf_ + vtableo),
-                           sizeof(voffset_t)) &&
-           Verify(vtableo, ReadScalar<voffset_t>(buf_ + vtableo));
+                           sizeof(voffset_t)))) return false;
+    auto vsize = ReadScalar<voffset_t>(buf_ + vtableo);
+    return Check((vsize & 1) == 0) && Verify(vtableo, vsize);
   }
 
   template<typename T>
