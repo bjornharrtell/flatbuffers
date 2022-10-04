@@ -632,7 +632,8 @@ struct IDLOptions {
   bool json_nested_flatbuffers;
   bool json_nested_flexbuffers;
   bool json_nested_legacy_flatbuffers;
-  bool ts_flat_file;
+  bool ts_flat_files;
+  bool ts_entry_points;
   bool no_leak_private_annotations;
 
   // Possible options for the more general generator below.
@@ -732,7 +733,8 @@ struct IDLOptions {
         json_nested_flatbuffers(true),
         json_nested_flexbuffers(true),
         json_nested_legacy_flatbuffers(false),
-        ts_flat_file(false),
+        ts_flat_files(false),
+        ts_entry_points(false),
         no_leak_private_annotations(false),
         mini_reflect(IDLOptions::kNone),
         require_explicit_ids(false),
